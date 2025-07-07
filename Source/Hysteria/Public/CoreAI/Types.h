@@ -21,6 +21,7 @@ struct AgentState {
 	uint8_t x, y;
 	bool hasItem;
 	ItemType item;
+	int score;
 	bool isPanicking;
 };
 enum class EActionType {
@@ -36,4 +37,6 @@ enum class EActionType {
 };
 struct FAgentAction {
 	EActionType Type;
+	FAgentAction(EActionType InType) : Type(InType) {}
+	FAgentAction() : Type(EActionType::Wait) {} // Optional: default constructor
 };

@@ -8,9 +8,27 @@
 template <int W, int H, int N_AGENTS>
 struct FSimulationContext
 {
-	const std::array<std::vector<FAgentAction>, N_AGENTS>* AgentTrajectories = nullptr;
+	std::array<std::vector<FAgentAction>, N_AGENTS>* AgentTrajectories = nullptr;
 	uint8_t GlobalTurn = 0;
-	std::array<bool, N_AGENTS>* AgentIsWaitingTemporarily = {};
+	std::array<bool, N_AGENTS> AgentIsWaitingTemporarily = {};
+
+	explicit FSimulationContext()
+	{
+		AgentTrajectories = new std::array<std::vector<FAgentAction>, N_AGENTS>();
+	}
+
+	void SetTrajectory(int AgentIdx, const std::vector<FAgentAction>& Trajectory)
+	{
+		// Sets the trajectory for the given agent.
+		if (AgentIdx >= 0 && AgentIdx < N_AGENTS)
+		{
+			if (!AgentTrajectories)
+			{
+				AgentTrajectories = new std::array<std::vector<FAgentAction>, N_AGENTS>();
+			}
+			(*AgentTrajectories)[AgentIdx] = Trajectory;
+		}
+	}
 
 	FAgentAction GetPlannedActionForAgent(int AgentIdx, int TurnIndex)
 	{

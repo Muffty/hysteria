@@ -4,6 +4,7 @@
 #include <mutex>
 #include <vector>
 #include <random>
+#include <algorithm> 
 #include "WorldState.h"
 #include "Types.h"
 
@@ -45,7 +46,7 @@ public:
 		agentNr = AgentNr;
 		Root = new FMCTSNode(nullptr, FAgentAction{EActionType::Wait});
 	}
-
+	FMCTS() = default;
 	~FMCTS()
 	{
 		// TODO: recursively delete entire tree
@@ -194,6 +195,10 @@ private:
 		// list of legal FAgentAction from node’s state for this agent
 		std::vector<FAgentAction> actions = state.GetLegalActionsForAgent(agentNr);
 
+		// Shuffle actions to avoid order bias
+		static thread_local std::mt19937 rng(std::random_device{}());
+		std::shuffle(actions.begin(), actions.end(), rng);
+
 		for (auto& a : actions)
 		{
 			auto* child = new FMCTSNode(node, a);
@@ -203,12 +208,19 @@ private:
 	}
 
 	// Simulate a random playout from state
-	static double Simulate(const FWorldState& state)
+	double Simulate(const FWorldState& state)
 	{
-		//TODO: implement a proper simulation strategy
-		thread_local std::mt19937 rng(std::random_device{}());
-		std::uniform_real_distribution<> dist(0.0, 1.0);
-		return dist(rng);
+		FWorldState simState = state;
+		for (int i = 0; i < 10; ++i)
+		{
+			std::vector<FAgentAction> actions = simState.GetLegalActionsForAgent(agentNr);
+			if (actions.empty()) break;
+			static thread_local std::mt19937 rng(std::random_device{}());
+			std::uniform_int_distribution<size_t> dist(0, actions.size() - 1);
+			FAgentAction action = actions[dist(rng)];
+			simState.AgentTurnOverride(SimContext, agentNr, action);
+		}
+		return simState.agents[agentNr].score;
 	}
 
 	// Backpropagate reward
@@ -217,7 +229,7 @@ private:
 		while (node)
 		{
 			node->currVisits.fetch_add(1);
-			node->currValue.fetch_add(reward);
+			atomic_add(node->currValue, reward);
 			node->virtualLoss.fetch_sub(1);
 			node = node->parent;
 		}
@@ -237,5 +249,13 @@ private:
 			return alpha * cQ + (1 - alpha) * pQ;
 		}
 		return cQ;
+	}
+
+	static inline void atomic_add(std::atomic<double>& atom, double value) {
+		double old = atom.load();
+		double desired;
+		do {
+			desired = old + value;
+		} while (!atom.compare_exchange_weak(old, desired));
 	}
 };

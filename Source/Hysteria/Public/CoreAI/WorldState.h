@@ -12,14 +12,51 @@ struct WorldState
 	AgentState agents[N_AGENTS];
 	uint8_t turnCounter;
 
+	WorldState Clone()
+	{
+		WorldState<W, H, N_AGENTS> newState;
+		for (int y = 0; y < H; ++y)
+		{
+			for (int x = 0; x < W; ++x)
+			{
+				newState.grid[y][x] = grid[y][x];
+				newState.items[y][x] = items[y][x];
+			}
+		}
+		for (int i = 0; i < N_AGENTS; ++i)
+		{
+			newState.agents[i] = agents[i];
+		}
+		newState.turnCounter = turnCounter;
+		return newState;
+	}
+
+	WorldState()
+	{
+		for (int y = 0; y < H; ++y)
+			for (int x = 0; x < W; ++x)
+				grid[y][x] = CellType::Empty;
+
+		for (int i = 0; i < N_AGENTS; ++i)
+			agents[i] = AgentState{0, 0, false, ItemType::None, 0, false};
+
+		for (int y = 0; y < H; ++y)
+			for (int x = 0; x < W; ++x)
+				items[y][x] = ItemType::None;
+
+		turnCounter = 0;
+	}
+
 	int GetAgentCount() const
 	{
 		return N_AGENTS;
 	}
+
 	int GetWidth() const
 	{
 		return W;
 	}
+
 	int GetHeight() const
 	{
 		return H;
@@ -104,7 +141,7 @@ struct WorldState
 					SimulationContext.SetAgentWaitingTemporarily(i, true);
 					ApplyAgentAction(i, FAgentAction{EActionType::Wait});
 				}
-				ApplyAgentAction(i, step.actions[i]);
+				ApplyAgentAction(i, step);
 			}
 		}
 
@@ -112,6 +149,15 @@ struct WorldState
 		{
 			// Increment turn counter after all actions are applied
 			turnCounter++;
+		}
+	}
+
+	void PlaceItem(int x, int y, ItemType item)
+	{
+		if (x >= 0 && x < W && y >= 0 && y < H)
+		{
+			// Ensure valid coordinates
+			items[y][x] = item;
 		}
 	}
 
@@ -146,10 +192,18 @@ struct WorldState
 		case EActionType::Pickup:
 			if (items[agents[agent].y][agents[agent].x] != ItemType::None)
 			{
-				ItemType previousItem = agents[agent].item;
-				agents[agent].item = items[agents[agent].y][agents[agent].x];
-				items[agents[agent].y][agents[agent].x] = previousItem;
-				agents[agent].hasItem = true;
+				if (items[agents[agent].y][agents[agent].x] == ItemType::Coin)
+				{
+					agents[agent].score += 10;
+					items[agents[agent].y][agents[agent].x] = ItemType::None;
+				}
+				else
+				{
+					ItemType previousItem = agents[agent].item;
+					agents[agent].item = items[agents[agent].y][agents[agent].x];
+					items[agents[agent].y][agents[agent].x] = previousItem;
+					agents[agent].hasItem = true;
+				}
 			}
 			break;
 		case EActionType::Drop:
