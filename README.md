@@ -5,7 +5,7 @@
 
 **Hysteria** is a sandbox AI demo and simulation game.  
 The player can dynamically modify a 3D world. Place obstacles, fire, items, and more. while observing agents trying to live their little lives and respond to your chaos.  
-Agents react in real-time using multi-agent MCTS, striving to survive and avoid panic as the environment changes.
+Agents strive to survive and avoid panic as the environment changes.
 
 ---
 
@@ -13,11 +13,11 @@ Agents react in real-time using multi-agent MCTS, striving to survive and avoid 
 
 - [x] **Interactive grid world**
 - [x] **Modify the world in real time:** Place boulders, walls, fire, and items
-- [x] **Multi-agent AI:** Agents plan and act based on current world state
+- [x] **Concurrent Multi-agent AI:** Agents plan and act based on current world state
 - [x] **Undo/Erase mode**
 - [x] **Step simulation:** Advance one turn at a time
 - [x] **Clean, gray-boxed visuals (UE5)**
-- [x] **A CLI interface**
+- [x] **A CLI (decoupled from UE5)**
 
 ### AI/Item System
 
@@ -33,11 +33,10 @@ Agents react in real-time using multi-agent MCTS, striving to survive and avoid 
 
 ## Current Limitations / Known Issues
 
-- **Agents in UE5 version have a bias toward the bottom-right.** (Not present in CLI.)
 - Some items are not fully implemented (see unchecked boxes above).
 - Simple visuals: gray-boxed for rapid prototyping and debugging.
 
-*See [issues](https://github.com/yourname/hysteria/issues) for details or to report bugs.*
+*See [issues](https://github.com/Muffty/hysteria/issues) for details or to report bugs.*
 
 ---
 
