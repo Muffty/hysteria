@@ -44,18 +44,21 @@ Agents strive to survive and avoid panic as the environment changes.
 
 ### CLI Version
 - Build with CMake:
+```
+cd CLI
 mkdir build
 cd build
 cmake ..
-make
-./HysteriaCLI
+cmake --build . --config Release
+.\Release\HysteriaCLI.exe
+```
 
 *(Requires C++17 and CMake)*
 
 ### Unreal Engine 5.6 Demo
 - Open the project in UE5.6+
 - Hit Play!
-- Use the buttons to modify the world, then advance the simulation with `[SPACE]`.
+- Use the buttons to modify the world, then advance the simulation.
 
 ---
 
@@ -76,10 +79,8 @@ make
 
 ## About
 
-**Hysteria** is an AI/tech demo by [your name], built to experiment with multi-agent planning, real-time decision making, and player-induced chaos.  
-Indie dev, AI researcher, and system design nerd.
+**Hysteria** is an AI/tech demo by Tobias Joppen, built to experiment with UE5 and C++, multi-agent planning, real-time decision making, and player-induced chaos.  
 
 ---
 
-*Screenshot from current Unreal Engine build.  
-See [issues](https://github.com/yourname/hysteria/issues) for progress and planned features.*
+*Screenshot from current Unreal Engine and CLI build.
