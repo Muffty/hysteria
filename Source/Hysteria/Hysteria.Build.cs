@@ -12,10 +12,12 @@ public class Hysteria : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "AIModule" });
 		PrivateDependencyModuleNames.AddRange(new string[] { "NavigationSystem" });
-
-		// Uncomment if you are using Slate UI
-		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
-		
+		PrivateDependencyModuleNames.AddRange(new string[] { "UMG" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "Slate" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "SlateCore" });
+		PublicDefinitions.Add("HYSTERIA_USE_UNREAL");
+		PublicDefinitions.Add("_HAS_EXCEPTIONS=1");
+		bEnableExceptions = true;
 		// Uncomment if you are using online features
 		// PrivateDependencyModuleNames.Add("OnlineSubsystem");
 

@@ -1,7 +1,6 @@
 #pragma once
 #include "Types.h"
 #include "SimulationContext.h"
-#include <vector>
 
 
 template <int W, int H, int N_AGENTS>
@@ -152,12 +151,20 @@ struct WorldState
 		}
 	}
 
-	void PlaceItem(int x, int y, ItemType item)
+	void SetItem(int x, int y, ItemType item)
 	{
+		// Ensure valid coordinates
 		if (x >= 0 && x < W && y >= 0 && y < H)
 		{
-			// Ensure valid coordinates
 			items[y][x] = item;
+		}
+	}
+	void SetTile(int x, int y, CellType type)
+	{
+		// Ensure valid coordinates
+		if (x >= 0 && x < W && y >= 0 && y < H)
+		{
+			grid[y][x] = type;
 		}
 	}
 
@@ -227,45 +234,73 @@ struct WorldState
 		}
 	}
 
-	std::vector<FAgentAction> GetLegalActionsForAgent(int agent)
+	HYSTERIA_VECTOR<FAgentAction> GetLegalActionsForAgent(int agent)
 	{
-		std::vector<FAgentAction> actions = {};
+		HYSTERIA_VECTOR<FAgentAction> actions = {};
 		// Check if agent can move up
 		if (agents[agent].y > 0 && grid[agents[agent].y - 1][agents[agent].x] == CellType::Empty)
 		{
+#ifdef HYSTERIA_USE_UNREAL
+			actions.Add({EActionType::MoveUp});
+#else
 			actions.push_back({EActionType::MoveUp});
+#endif
 		}
 		// Check if agent can move down
 		if (agents[agent].y < H - 1 && grid[agents[agent].y + 1][agents[agent].x] == CellType::Empty)
 		{
+#ifdef HYSTERIA_USE_UNREAL
+			actions.Add({EActionType::MoveDown});
+#else
 			actions.push_back({EActionType::MoveDown});
+#endif
 		}
 		// Check if agent can move left
 		if (agents[agent].x > 0 && grid[agents[agent].y][agents[agent].x - 1] == CellType::Empty)
 		{
+#ifdef HYSTERIA_USE_UNREAL
+			actions.Add({EActionType::MoveLeft});
+#else
 			actions.push_back({EActionType::MoveLeft});
+#endif
 		}
 		// Check if agent can move right
 		if (agents[agent].x < W - 1 && grid[agents[agent].y][agents[agent].x + 1] == CellType::Empty)
 		{
+#ifdef HYSTERIA_USE_UNREAL
+			actions.Add({EActionType::MoveRight});
+#else
 			actions.push_back({EActionType::MoveRight});
+#endif
 		}
 		// Check if agent can pick up an item
 		if (items[agents[agent].y][agents[agent].x] != ItemType::None && !(agents[agent].hasItem && agents[agent].item
 			== items[agents[agent].y][agents[agent].x]))
 		{
 			// Only allow pickup if agent does not already have an item or has a different item (will drop the currently held one)
+#ifdef HYSTERIA_USE_UNREAL
+			actions.Add({EActionType::Pickup});
+#else
 			actions.push_back({EActionType::Pickup});
+#endif
 		}
 		// Check if agent can drop an item
 		if (agents[agent].hasItem && items[agents[agent].y][agents[agent].x] == ItemType::None)
 		{
+#ifdef HYSTERIA_USE_UNREAL
+			actions.Add({EActionType::Drop});
+#else
 			actions.push_back({EActionType::Drop});
+#endif
 		}
 		// Check if agent can use an item
 		if (agents[agent].hasItem && agents[agent].item == ItemType::Hose)
 		{
+#ifdef HYSTERIA_USE_UNREAL
+			actions.Add({EActionType::UseItem});
+#else
 			actions.push_back({EActionType::UseItem});
+#endif
 		}
 
 		return actions;

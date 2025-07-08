@@ -2,29 +2,28 @@
 
 #include "Types.h"
 #include <array>
-#include <vector>
 #include <optional>
 
 template <int W, int H, int N_AGENTS>
 struct FSimulationContext
 {
-	std::array<std::vector<FAgentAction>, N_AGENTS>* AgentTrajectories = nullptr;
+	std::array<HYSTERIA_VECTOR<FAgentAction>, N_AGENTS>* AgentTrajectories = nullptr;
 	uint8_t GlobalTurn = 0;
 	std::array<bool, N_AGENTS> AgentIsWaitingTemporarily = {};
 
 	explicit FSimulationContext()
 	{
-		AgentTrajectories = new std::array<std::vector<FAgentAction>, N_AGENTS>();
+		AgentTrajectories = new std::array<HYSTERIA_VECTOR<FAgentAction>, N_AGENTS>();
 	}
 
-	void SetTrajectory(int AgentIdx, const std::vector<FAgentAction>& Trajectory)
+	void SetTrajectory(int AgentIdx, const HYSTERIA_VECTOR<FAgentAction>& Trajectory)
 	{
 		// Sets the trajectory for the given agent.
 		if (AgentIdx >= 0 && AgentIdx < N_AGENTS)
 		{
 			if (!AgentTrajectories)
 			{
-				AgentTrajectories = new std::array<std::vector<FAgentAction>, N_AGENTS>();
+				AgentTrajectories = new std::array<HYSTERIA_VECTOR<FAgentAction>, N_AGENTS>();
 			}
 			(*AgentTrajectories)[AgentIdx] = Trajectory;
 		}
@@ -38,9 +37,13 @@ struct FSimulationContext
 		if (AgentIsWaitingTemporarily[AgentIdx])
 			return FAgentAction(EActionType::Wait);
 
-		const auto& traj = (*AgentTrajectories)[AgentIdx];
+		const HYSTERIA_VECTOR<FAgentAction>& traj = (*AgentTrajectories)[AgentIdx];
 		int offset = TurnIndex - GlobalTurn;
+#ifdef HYSTERIA_USE_UNREAL
+		if (offset >= 0 && offset < traj.Num())
+#else
 		if (offset >= 0 && offset < traj.size())
+#endif
 			return traj[offset];
 		return FAgentAction(EActionType::Wait);
 	}

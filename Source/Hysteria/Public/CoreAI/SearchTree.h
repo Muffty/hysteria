@@ -1,12 +1,37 @@
 #pragma once
 #include <atomic>
 #include <cmath>
+#ifdef HYSTERIA_USE_UNREAL
+#include "Async/Async.h"
+#include "HAL/CriticalSection.h"
+#else
 #include <mutex>
-#include <vector>
 #include <random>
-#include <algorithm> 
+#endif
+#include <algorithm>
 #include "WorldState.h"
 #include "Types.h"
+
+#ifdef HYSTERIA_USE_UNREAL
+template<typename TCallable>
+struct FLambdaWorker
+{
+	TCallable Job;
+	bool isDone = false;
+	FLambdaWorker(TCallable InJob) : Job(InJob) {}
+
+	void DoWork()
+	{
+		Job();
+		isDone = true;		
+	}
+	bool CanAbandon() const { return false; }
+	void Abandon() {}
+	bool IsDone() const { return isDone; }
+	TStatId GetStatId() const { RETURN_QUICK_DECLARE_CYCLE_STAT(FLambdaWorker, STATGROUP_ThreadPoolAsyncTasks); }
+
+};
+#endif
 
 struct FMCTSNode
 {
@@ -21,10 +46,15 @@ struct FMCTSNode
 	// Tree structure
 	FAgentAction actionFromParent;
 	FMCTSNode* parent = nullptr;
-	std::vector<FMCTSNode*> children;
+	HYSTERIA_VECTOR<FMCTSNode*> children;
 
 	// Expansion guard
-	std::mutex ExpandMutex;
+#ifdef HYSTERIA_USE_UNREAL
+	FCriticalSection ExpandMutex;
+#else
+	std::mutex ExpandMutex;	
+#endif
+
 	bool bExpanded = false;
 
 	FMCTSNode(FMCTSNode* InParent = nullptr, const FAgentAction InAction = {})
@@ -46,18 +76,24 @@ public:
 		agentNr = AgentNr;
 		Root = new FMCTSNode(nullptr, FAgentAction{EActionType::Wait});
 	}
+
 	FMCTS() = default;
+
 	~FMCTS()
 	{
 		// TODO: recursively delete entire tree
 	}
 
-	std::vector<FAgentAction> GetBestTrajectory() const
+	HYSTERIA_VECTOR<FAgentAction> GetBestTrajectory() const
 	{
 		// Collect the best trajectory from the root node
-		std::vector<FAgentAction> trajectory;
+		HYSTERIA_VECTOR<FAgentAction> trajectory;
 		FMCTSNode* node = Root;
+#ifdef HYSTERIA_USE_UNREAL
+		while (node && !node->children.IsEmpty())
+#else
 		while (node && !node->children.empty())
+#endif
 		{
 			// Find the child with the highest visit count
 			FMCTSNode* bestChild = nullptr;
@@ -72,16 +108,45 @@ public:
 				}
 			}
 			if (!bestChild) break; // No children found
+#ifdef HYSTERIA_USE_UNREAL
+			trajectory.Add(bestChild->actionFromParent);
+#else
 			trajectory.push_back(bestChild->actionFromParent);
+#endif
 			node = bestChild;
 		}
 		return trajectory;
 	}
 
 	// Kick off numThreads running rollouts until totalRollouts are done
-	void RunSearch(int numThreads, int totalRollouts, FSimContext SimContext)
+	void RunSearch(int numThreads, int totalRollouts, FSimContext InSimContext)
 	{
-		this->SimContext = SimContext;
+		this->SimContext = InSimContext;
+
+		
+#ifdef HYSTERIA_USE_UNREAL
+		// Unreal Engine uses Async tasks for multithreading
+		auto MyJob = [&]()
+		{
+			int n = 0;
+			while (n < totalRollouts)
+			{
+				Rollout();
+				n++;
+			}
+		};
+		
+		TArray<FAsyncTask<FLambdaWorker<decltype(MyJob)>>*> Tasks;
+		for (int i = 0; i < numThreads; ++i)
+		{
+			auto* Task = new FAsyncTask<FLambdaWorker<decltype(MyJob)>>(MyJob);
+			Task->StartBackgroundTask();
+			Tasks.Add(Task);
+		}
+		
+		for (auto* Task : Tasks)
+			Task->EnsureCompletion();
+#else		
 		std::atomic<int> rolloutCount{0};
 
 		auto Worker = [&]()
@@ -94,10 +159,11 @@ public:
 			}
 		};
 
-		std::vector<std::thread> threads;
+		std::vector<std::thread> threads;	
 		for (int i = 0; i < numThreads; ++i)
 			threads.emplace_back(Worker);
 		for (auto& t : threads) t.join();
+#endif
 	}
 
 	// After search, pick the action with highest (visit or blended) score
@@ -142,7 +208,7 @@ private:
 		FWorldState simState = RootState.Clone();
 
 		SimContext.ResetTemporaryData();
-		
+
 		// 1. Selection
 		FMCTSNode* node = Root;
 		while (node->bExpanded)
@@ -189,20 +255,37 @@ private:
 	// Expand leaf by creating all child nodes
 	void Expand(FMCTSNode* node, FWorldState& state)
 	{
+#ifdef HYSTERIA_USE_UNREAL
+		FScopeLock Lock(&node->ExpandMutex);
+#else
 		std::lock_guard<std::mutex> lock(node->ExpandMutex);
+#endif
 		if (node->bExpanded) return;
 
 		// list of legal FAgentAction from node’s state for this agent
-		std::vector<FAgentAction> actions = state.GetLegalActionsForAgent(agentNr);
+		HYSTERIA_VECTOR<FAgentAction> actions = state.GetLegalActionsForAgent(agentNr);
 
 		// Shuffle actions to avoid order bias
+#ifdef HYSTERIA_USE_UNREAL
+		for (int32 i = actions.Num() - 1; i > 0; i--) {
+			int32 j = FMath::Floor(FMath::Rand() * (i + 1)) % actions.Num();
+			FAgentAction temp = actions[i];
+			actions[i] = actions[j];
+			actions[j] = temp;
+		}
+#else
 		static thread_local std::mt19937 rng(std::random_device{}());
 		std::shuffle(actions.begin(), actions.end(), rng);
+#endif
 
 		for (auto& a : actions)
 		{
 			auto* child = new FMCTSNode(node, a);
+#ifdef HYSTERIA_USE_UNREAL
+			node->children.Add(child);
+#else
 			node->children.push_back(child);
+#endif
 		}
 		node->bExpanded = true;
 	}
@@ -213,11 +296,16 @@ private:
 		FWorldState simState = state;
 		for (int i = 0; i < 10; ++i)
 		{
-			std::vector<FAgentAction> actions = simState.GetLegalActionsForAgent(agentNr);
+			HYSTERIA_VECTOR<FAgentAction> actions = simState.GetLegalActionsForAgent(agentNr);
+#ifdef HYSTERIA_USE_UNREAL
+			if (actions.IsEmpty()) break;
+			FAgentAction action = actions[FMath::RandRange(0, actions.Num() - 1)];
+#else
 			if (actions.empty()) break;
 			static thread_local std::mt19937 rng(std::random_device{}());
 			std::uniform_int_distribution<size_t> dist(0, actions.size() - 1);
 			FAgentAction action = actions[dist(rng)];
+#endif
 			simState.AgentTurnOverride(SimContext, agentNr, action);
 		}
 		return simState.agents[agentNr].score;
@@ -251,11 +339,37 @@ private:
 		return cQ;
 	}
 
-	static inline void atomic_add(std::atomic<double>& atom, double value) {
+	static inline void atomic_add(std::atomic<double>& atom, double value)
+	{
 		double old = atom.load();
 		double desired;
-		do {
+		do
+		{
 			desired = old + value;
-		} while (!atom.compare_exchange_weak(old, desired));
+		}
+		while (!atom.compare_exchange_weak(old, desired));
 	}
 };
+
+#ifdef HYSTERIA_USE_UNREAL
+// Define a worker struct
+template <int W, int H, int N_AGENTS>
+struct FMCTSWorker
+{
+	FMCTS<W, H, N_AGENTS>* Instance;
+	int TotalRollouts;
+
+	FMCTSWorker(FMCTS<W, H, N_AGENTS>* InInstance, int InTotalRollouts)
+		: Instance(InInstance), TotalRollouts(InTotalRollouts) {}
+
+	void DoWork()
+	{
+		int n = 0;
+		while (n < TotalRollouts)
+		{
+			Instance->Rollout();
+			n++;
+		}
+	}
+};
+#endif

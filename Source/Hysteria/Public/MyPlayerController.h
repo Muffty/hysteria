@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "MyPlayerController.generated.h"
-
+class UHUDWidget;
 
 UCLASS()
 class HYSTERIA_API AMyPlayerController : public APlayerController
@@ -14,4 +14,10 @@ class HYSTERIA_API AMyPlayerController : public APlayerController
 
 public:
 	virtual void BeginPlay() override;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class UUserWidget> HUDWidgetClass;
+
+	UPROPERTY()
+	UHUDWidget* HUDWidgetInstance;
 };

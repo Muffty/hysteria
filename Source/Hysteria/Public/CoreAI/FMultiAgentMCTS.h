@@ -7,9 +7,7 @@
 #include "Types.h"
 #include "SimulationContext.h"
 #include <array>
-#include <vector>
 #include <optional>
-
 
 template <int W, int H, int N_AGENTS>
 class FMultiAgentMCTS
@@ -19,15 +17,13 @@ public:
 	using FSimContext = FSimulationContext<W, H, N_AGENTS>;
 
 	explicit FMultiAgentMCTS(const FWorldState& InitialState)
-		: CurrentState(InitialState),
-		  SimulationContext()
+		: SimulationContext(), CurrentState(InitialState)		  
 	{
 		CurrentState = InitialState;
 
 		SimulationContext = FSimContext();
 		SimulationContext.GlobalTurn = InitialState.turnCounter;
 
-		AgentTrees = std::vector<FMCTS<W, H, N_AGENTS>>(N_AGENTS);
 		for (int i = 0; i < N_AGENTS; ++i)
 		{
 			AgentTrees[i] = FMCTS<W, H, N_AGENTS>(InitialState, i);
@@ -46,8 +42,9 @@ public:
 	//Performs a single step of the MCTS process for all agents.
 	std::array<FAgentAction, N_AGENTS> Step()
 	{
-		//TODO: for each agent, measure how long their trajectory is still valid and order the execution accordingly.
-		std::vector<int> agentOrder(N_AGENTS, 0);
+
+		std::array<int, N_AGENTS> agentOrder;
+
 		for (int i = 0; i < N_AGENTS; ++i)
 			agentOrder[i] = i;
 
@@ -85,7 +82,7 @@ public:
 		return CurrentState;
 	}
 private:
-	std::vector<FMCTS<W, H, N_AGENTS>> AgentTrees;
+	std::array<FMCTS<W, H, N_AGENTS>, N_AGENTS> AgentTrees;
 	FSimContext SimulationContext;
 	FWorldState CurrentState;
 	int numThreads = 4;

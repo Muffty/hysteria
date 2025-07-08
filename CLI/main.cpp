@@ -95,7 +95,7 @@ int main()
         if (c == 'c')
         {
             //Place a coin at the selected position
-            Planner.GetCurrentState().PlaceItem(selX, selY, ItemType::Coin);
+            Planner.GetCurrentState().SetItem(selX, selY, ItemType::Coin);
         }
         if (c == 'w' && selY > 0) --selY;
         if (c == 's' && selY < 16-1) ++selY;
