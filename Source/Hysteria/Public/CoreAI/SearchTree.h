@@ -170,10 +170,18 @@ public:
 	FAgentAction GetBestAction() const
 	{
 		FMCTSNode* best = nullptr;
-		int bestV = -1;
+		double bestV = -1;
+		UE_LOG(LogTemp, Display, TEXT("GetBestAction"));
 		for (auto* c : Root->children)
 		{
-			int v = c->currVisits.load();
+			double v = c->currVisits.load();
+			//Add a epsilon random value to avoid ties			
+#ifdef HYSTERIA_USE_UNREAL
+			v += 1e-6 * (FMath::Rand() % 1000); // Small random perturbation
+#else
+			v += 1e-6 * (rand() % 1000); // Small random perturbation
+#endif
+			UE_LOG(LogTemp, Display, TEXT("%f"), v);
 			if (v > bestV)
 			{
 				bestV = v;
