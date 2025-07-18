@@ -273,7 +273,7 @@ private:
 
 		// Shuffle actions to avoid order bias
 #ifdef HYSTERIA_USE_UNREAL
-		for (int32 i = actions.Num() - 1; i > 0; i--) {
+		for (int32 i = actions.Num() - 1; i >= 0; i--) {
 			int32 j = FMath::Floor(FMath::Rand() * (i + 1)) % actions.Num();
 			FAgentAction temp = actions[i];
 			actions[i] = actions[j];
