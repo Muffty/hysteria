@@ -171,7 +171,6 @@ public:
 	{
 		FMCTSNode* best = nullptr;
 		double bestV = -1;
-		UE_LOG(LogTemp, Display, TEXT("GetBestAction"));
 		for (auto* c : Root->children)
 		{
 			double v = c->currVisits.load();
@@ -181,7 +180,6 @@ public:
 #else
 			v += 1e-6 * (rand() % 1000); // Small random perturbation
 #endif
-			UE_LOG(LogTemp, Display, TEXT("%f"), v);
 			if (v > bestV)
 			{
 				bestV = v;
