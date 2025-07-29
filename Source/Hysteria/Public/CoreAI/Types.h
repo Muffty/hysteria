@@ -46,6 +46,13 @@ struct AgentState {
 	int score;
 	bool isPanicking;
 };
+enum class EDirection
+{
+	Up,
+	Down,
+	Left,
+	Right
+};
 enum class EActionType {
 	MoveDown,
 	MoveUp,

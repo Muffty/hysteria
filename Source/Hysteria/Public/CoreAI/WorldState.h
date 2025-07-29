@@ -10,6 +10,7 @@ struct WorldState
 	ItemType items[H][W];
 	AgentState agents[N_AGENTS];
 	uint8_t turnCounter;
+	EDirection Directions[4] = { EDirection::Up, EDirection::Down, EDirection::Left, EDirection::Right };
 
 	WorldState Clone()
 	{
@@ -159,12 +160,26 @@ struct WorldState
 			items[y][x] = item;
 		}
 	}
+
 	void SetTile(int x, int y, CellType type)
 	{
 		// Ensure valid coordinates
 		if (x >= 0 && x < W && y >= 0 && y < H)
 		{
 			grid[y][x] = type;
+		}
+	}
+
+	void HandleNeighborTileOnUseItem(int Agent, CellType CType)
+	{
+		for (int i = 0; i < sizeof(Directions); i++)
+		{
+			auto direction = Directions[i];
+			if (GetNeighborTileCell(agents[Agent].x, agents[Agent].y, direction) == CType)
+			{
+				SetNeighborTileCell(agents[Agent].x, agents[Agent].y, direction, CellType::Empty);
+				agents[Agent].score += 10;
+			}
 		}
 	}
 
@@ -224,13 +239,92 @@ struct WorldState
 		case EActionType::UseItem:
 			if (agents[agent].hasItem && agents[agent].item != ItemType::None)
 			{
-				//TODO: Implement usage logic
-				//For now, just reset the item
-				agents[agent].hasItem = false;
-				agents[agent].item = ItemType::None;
+				switch (agents[agent].item)
+				{
+				case ItemType::Hose:
+					HandleNeighborTileOnUseItem(agent, CellType::Fire);
+					break;
+				case ItemType::Pickaxe:
+					HandleNeighborTileOnUseItem(agent, CellType::PlayerObstacle);
+					break;
+				default:
+					break;
+				}
 			}
 		default:
 			break; // Wait or any other action does nothing
+		}
+	}
+
+
+	ItemType GetNeighborTileItem(int X, int Y, EDirection Direction)
+	{
+		switch (Direction)
+		{
+		case EDirection::Down:
+			Y = Y + 1;
+			break;
+		case EDirection::Up:
+			Y = Y - 1;
+			break;
+		case EDirection::Left:
+			X = X - 1;
+			break;
+		case EDirection::Right:
+			X = X + 1;
+			break;
+		}
+		if (X >= 0 && X < W && Y >= 0 && Y < H)
+		{
+			return items[Y][X];
+		}
+		return ItemType::None;
+	}
+
+	CellType GetNeighborTileCell(int X, int Y, EDirection Direction)
+	{
+		switch (Direction)
+		{
+		case EDirection::Down:
+			Y = Y + 1;
+			break;
+		case EDirection::Up:
+			Y = Y - 1;
+			break;
+		case EDirection::Left:
+			X = X - 1;
+			break;
+		case EDirection::Right:
+			X = X + 1;
+			break;
+		}
+		if (X >= 0 && X < W && Y >= 0 && Y < H)
+		{
+			return grid[Y][X];
+		}
+		return CellType::Empty;
+	}
+
+	void SetNeighborTileCell(int X, int Y, EDirection Direction, CellType Type)
+	{
+		switch (Direction)
+		{
+		case EDirection::Down:
+			Y = Y + 1;
+			break;
+		case EDirection::Up:
+			Y = Y - 1;
+			break;
+		case EDirection::Left:
+			X = X - 1;
+			break;
+		case EDirection::Right:
+			X = X + 1;
+			break;
+		}
+		if (X >= 0 && X < W && Y >= 0 && Y < H)
+		{
+			grid[Y][X] = Type;
 		}
 	}
 

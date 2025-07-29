@@ -97,6 +97,36 @@ int main()
             //Place a coin at the selected position
             Planner.GetCurrentState().SetItem(selX, selY, ItemType::Coin);
         }
+        if(c == 'p')
+        {
+            //Place a pickaxe at the selected position
+            Planner.GetCurrentState().SetItem(selX, selY, ItemType::Pickaxe);
+        }
+        if(c == 'h')
+        {
+            //Place a hose at the selected position
+            Planner.GetCurrentState().SetItem(selX, selY, ItemType::Hose);
+        }
+        if(c == 'f')
+        {
+            //Place a food at the selected position
+            Planner.GetCurrentState().SetItem(selX, selY, ItemType::Food);
+        }
+        if(c == 'o')
+        {
+            //Place a obstacle at the selected position
+            Planner.GetCurrentState().SetTile(selX, selY, CellType::PlayerObstacle);
+        }
+        if(c == 'e')
+        {
+            //Place a wall at the selected position
+            Planner.GetCurrentState().SetTile(selX, selY, CellType::Wall);
+        }
+        if( c == 'r')
+        {
+            //place a fire
+            Planner.GetCurrentState().SetTile(selX, selY, CellType::Fire);
+        }
         if (c == 'w' && selY > 0) --selY;
         if (c == 's' && selY < 16-1) ++selY;
         if (c == 'a' && selX > 0) --selX;
