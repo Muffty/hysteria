@@ -72,24 +72,31 @@ int main()
 
     // 1. Setup world
     auto world = CreateDemoMap();
+    const int agents = 3;
 
     // 2. Initialize MCTS system
-    FMultiAgentMCTS<16, 16, 3> Planner = FMultiAgentMCTS<16, 16, 3>(world);
+    FMultiAgentMCTS<16, 16, agents> Planner = FMultiAgentMCTS<16, 16, agents>(world);
 
-    // 3. Run one round of planning
-    Planner.Step();
-
-    // 4. Print planned actions
-    for (int i = 0; i < 3; ++i)
+    // 3. Print planned actions
+    for (int i = 0; i < agents; ++i)
     {
         auto action = Planner.GetPlannedActionForAgent(i);
         std::cout << "Agent " << i << ": " << int(action.Type) << "\n";
     }
 
+    //4. Loop actions
+
     int selX = 0, selY = 0;
     while (true) {
         PrintBoard(Planner.GetCurrentState(), selX, selY);
         std::cout << "Use WASD to move, c to put a coint, SPACE to step, q to quit\n";
+        std::cout << "\t c => coin";
+        std::cout << "\t p => pickaxe \n";
+        std::cout << "\t h => hose";
+        std::cout << "\t f => food \n";
+        std::cout << "\t e => wall";
+        std::cout << "\t o => obstacle \n";
+        std::cout << "\t r => fire";
         char c = _getch(); // or std::cin.get(), but _getch() doesn't require enter
         if (c == 'q') break;
         if (c == 'c')
