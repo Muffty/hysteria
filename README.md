@@ -23,11 +23,12 @@ Agents strive to survive and avoid panic as the environment changes.
 
 - [x] **Boulders** – blocks paths
 - [x] **Walls** – blocks paths (indestructable)
-- [ ] **Fire** – panic agent, can be extinguished
-- [ ] **Apple** – calms panicked agents
-- [ ] **Pickaxe** – agents can destroy obstacles
+- [x] **Fire** – can be extinguished
+- [ ] **Fire** - panics agents that cant flee
+- [ ] **Apple** – calms nearby panicked agents
+- [x] **Pickaxe** – agents can destroy obstacles
 - [x] **Coin** – motivates agents to pick it up
-- [ ] **Water Hose** – extinguishes nearby fire on use
+- [x] **Water Hose** – extinguishes nearby fire on use
 
 ---
 
