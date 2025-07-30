@@ -256,7 +256,6 @@ struct WorldState
 		}
 	}
 
-
 	ItemType GetNeighborTileItem(int X, int Y, EDirection Direction)
 	{
 		switch (Direction)
@@ -388,7 +387,7 @@ struct WorldState
 #endif
 		}
 		// Check if agent can use an item
-		if (agents[agent].hasItem && agents[agent].item == ItemType::Hose)
+		if (agents[agent].hasItem && CanExecute(agent, EActionType::UseItem))
 		{
 #ifdef HYSTERIA_USE_UNREAL
 			actions.Add({EActionType::UseItem});
